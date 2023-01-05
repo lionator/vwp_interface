@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PACMOD_INTERFACE__PACMOD_INTERFACE_HPP_
-#define PACMOD_INTERFACE__PACMOD_INTERFACE_HPP_
+#ifndef VWP_INTERFACE__VWP_INTERFACE_HPP_
+#define VWP_INTERFACE__VWP_INTERFACE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_api_utils/tier4_api_utils.hpp>
@@ -56,14 +56,14 @@
 #include <optional>
 #include <string>
 
-class PacmodInterface : public rclcpp::Node
+class VWPInterface : public rclcpp::Node
 {
 public:
   using ActuationCommandStamped = tier4_vehicle_msgs::msg::ActuationCommandStamped;
   using ActuationStatusStamped = tier4_vehicle_msgs::msg::ActuationStatusStamped;
   using SteeringWheelStatusStamped = tier4_vehicle_msgs::msg::SteeringWheelStatusStamped;
   using ControlModeCommand = autoware_auto_vehicle_msgs::srv::ControlModeCommand;
-  PacmodInterface();
+  VWPInterface();
 
 private:
   typedef message_filters::sync_policies::ApproximateTime<

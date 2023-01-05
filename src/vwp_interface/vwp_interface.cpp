@@ -12,21 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <pacmod_interface/pacmod_interface.hpp>
+#include <vwp_interface/vwp_interface.hpp>
 
 #include <algorithm>
 #include <limits>
 #include <memory>
 #include <utility>
 
-PacmodInterface::PacmodInterface()
-: Node("pacmod_interface"),
+VWPInterface::VWPInterface()
+: Node("vwp_interface"),
   vehicle_info_(vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo())
 {
   /* setup parameters */
   base_frame_id_ = declare_parameter("base_frame_id", "base_link");
   command_timeout_ms_ = declare_parameter("command_timeout_ms", 1000);
-  loop_rate_ = declare_parameter("loop_rate", 30.0);
+  loop_rate_ = declare_parameter("loop_rate", 50.0);
 
   /* parameters for vehicle specifications */
   tire_radius_ = vehicle_info_.wheel_radius_m;
@@ -68,26 +68,26 @@ PacmodInterface::PacmodInterface()
 
   // From autoware
   control_cmd_sub_ = create_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>(
-    "/control/command/control_cmd", 1, std::bind(&PacmodInterface::callbackControlCmd, this, _1));
+    "/control/command/control_cmd", 1, std::bind(&VWPInterface::callbackControlCmd, this, _1));
   gear_cmd_sub_ = create_subscription<autoware_auto_vehicle_msgs::msg::GearCommand>(
-    "/control/command/gear_cmd", 1, std::bind(&PacmodInterface::callbackGearCmd, this, _1));
+    "/control/command/gear_cmd", 1, std::bind(&VWPInterface::callbackGearCmd, this, _1));
   turn_indicators_cmd_sub_ =
     create_subscription<autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand>(
       "/control/command/turn_indicators_cmd", rclcpp::QoS{1},
-      std::bind(&PacmodInterface::callbackTurnIndicatorsCommand, this, _1));
+      std::bind(&VWPInterface::callbackTurnIndicatorsCommand, this, _1));
   hazard_lights_cmd_sub_ =
     create_subscription<autoware_auto_vehicle_msgs::msg::HazardLightsCommand>(
       "/control/command/hazard_lights_cmd", rclcpp::QoS{1},
-      std::bind(&PacmodInterface::callbackHazardLightsCommand, this, _1));
+      std::bind(&VWPInterface::callbackHazardLightsCommand, this, _1));
 
   actuation_cmd_sub_ = create_subscription<ActuationCommandStamped>(
     "/control/command/actuation_cmd", 1,
-    std::bind(&PacmodInterface::callbackActuationCmd, this, _1));
+    std::bind(&VWPInterface::callbackActuationCmd, this, _1));
   emergency_sub_ = create_subscription<tier4_vehicle_msgs::msg::VehicleEmergencyStamped>(
     "/control/command/emergency_cmd", 1,
-    std::bind(&PacmodInterface::callbackEmergencyCmd, this, _1));
+    std::bind(&VWPInterface::callbackEmergencyCmd, this, _1));
   control_mode_server_ = create_service<ControlModeCommand>(
-    "input/control_mode_request", std::bind(&PacmodInterface::onControlModeRequest, this, _1, _2));
+    "input/control_mode_request", std::bind(&VWPInterface::onControlModeRequest, this, _1, _2));
 
   // From pacmod
 
@@ -117,7 +117,7 @@ PacmodInterface::PacmodInterface()
       *brake_rpt_sub_, *shift_rpt_sub_, *turn_rpt_sub_, *global_rpt_sub_, *rear_door_rpt_sub_);
 
   pacmod_feedbacks_sync_->registerCallback(std::bind(
-    &PacmodInterface::callbackPacmodRpt, this, std::placeholders::_1, std::placeholders::_2,
+    &VWPInterface::callbackPacmodRpt, this, std::placeholders::_1, std::placeholders::_2,
     std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6,
     std::placeholders::_7, std::placeholders::_8));
 
@@ -164,52 +164,52 @@ PacmodInterface::PacmodInterface()
   tier4_api_utils::ServiceProxyNodeInterface proxy(this);
   srv_ = proxy.create_service<tier4_external_api_msgs::srv::SetDoor>(
     "/api/vehicle/set/door",
-    std::bind(&PacmodInterface::setDoor, this, std::placeholders::_1, std::placeholders::_2));
+    std::bind(&VWPInterface::setDoor, this, std::placeholders::_1, std::placeholders::_2));
 
   // Timer
   const auto period_ns = rclcpp::Rate(loop_rate_).period();
   timer_ = rclcpp::create_timer(
-    this, get_clock(), period_ns, std::bind(&PacmodInterface::publishCommands, this));
+    this, get_clock(), period_ns, std::bind(&VWPInterface::publishCommands, this));
 }
 
-void PacmodInterface::callbackActuationCmd(const ActuationCommandStamped::ConstSharedPtr msg)
+void VWPInterface::callbackActuationCmd(const ActuationCommandStamped::ConstSharedPtr msg)
 {
   actuation_command_received_time_ = this->now();
   actuation_cmd_ptr_ = msg;
 }
 
-void PacmodInterface::callbackEmergencyCmd(
+void VWPInterface::callbackEmergencyCmd(
   const tier4_vehicle_msgs::msg::VehicleEmergencyStamped::ConstSharedPtr msg)
 {
   is_emergency_ = msg->emergency;
 }
 
-void PacmodInterface::callbackControlCmd(
+void VWPInterface::callbackControlCmd(
   const autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr msg)
 {
   control_command_received_time_ = this->now();
   control_cmd_ptr_ = msg;
 }
 
-void PacmodInterface::callbackGearCmd(
+void VWPInterface::callbackGearCmd(
   const autoware_auto_vehicle_msgs::msg::GearCommand::ConstSharedPtr msg)
 {
   gear_cmd_ptr_ = msg;
 }
 
-void PacmodInterface::callbackTurnIndicatorsCommand(
+void VWPInterface::callbackTurnIndicatorsCommand(
   const autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand::ConstSharedPtr msg)
 {
   turn_indicators_cmd_ptr_ = msg;
 }
 
-void PacmodInterface::callbackHazardLightsCommand(
+void VWPInterface::callbackHazardLightsCommand(
   const autoware_auto_vehicle_msgs::msg::HazardLightsCommand::ConstSharedPtr msg)
 {
   hazard_lights_cmd_ptr_ = msg;
 }
 
-void PacmodInterface::onControlModeRequest(
+void VWPInterface::onControlModeRequest(
   const ControlModeCommand::Request::SharedPtr request,
   const ControlModeCommand::Response::SharedPtr response)
 {
@@ -232,7 +232,7 @@ void PacmodInterface::onControlModeRequest(
   return;
 }
 
-void PacmodInterface::callbackPacmodRpt(
+void VWPInterface::callbackPacmodRpt(
   const pacmod3_msgs::msg::SystemRptFloat::ConstSharedPtr steer_wheel_rpt,
   const pacmod3_msgs::msg::WheelSpeedRpt::ConstSharedPtr wheel_speed_rpt,
   const pacmod3_msgs::msg::SystemRptFloat::ConstSharedPtr accel_rpt,
@@ -351,7 +351,7 @@ void PacmodInterface::callbackPacmodRpt(
   }
 }
 
-void PacmodInterface::publishCommands()
+void VWPInterface::publishCommands()
 {
   /* guard */
   if (!actuation_cmd_ptr_ || !control_cmd_ptr_ || !is_pacmod_rpt_received_ || !gear_cmd_ptr_) {
@@ -532,7 +532,7 @@ void PacmodInterface::publishCommands()
   }
 }
 
-double PacmodInterface::calcSteerWheelRateCmd(const double gear_ratio)
+double VWPInterface::calcSteerWheelRateCmd(const double gear_ratio)
 {
   const auto current_vel =
     std::fabs(calculateVehicleVelocity(*wheel_speed_rpt_ptr_, *gear_cmd_rpt_ptr_));
@@ -553,7 +553,7 @@ double PacmodInterface::calcSteerWheelRateCmd(const double gear_ratio)
   return std::min(std::max(std::fabs(rate), min_steering_wheel_rate_), max_steering_wheel_rate_);
 }
 
-double PacmodInterface::calculateVehicleVelocity(
+double VWPInterface::calculateVehicleVelocity(
   const pacmod3_msgs::msg::WheelSpeedRpt & wheel_speed_rpt,
   const pacmod3_msgs::msg::SystemRptInt & shift_rpt)
 {
@@ -564,13 +564,13 @@ double PacmodInterface::calculateVehicleVelocity(
   return sign * vel;
 }
 
-double PacmodInterface::calculateVariableGearRatio(const double vel, const double steer_wheel)
+double VWPInterface::calculateVariableGearRatio(const double vel, const double steer_wheel)
 {
   return std::max(
     1e-5, vgr_coef_a_ + vgr_coef_b_ * vel * vel - vgr_coef_c_ * std::fabs(steer_wheel));
 }
 
-uint16_t PacmodInterface::toPacmodShiftCmd(
+uint16_t VWPInterface::toPacmodShiftCmd(
   const autoware_auto_vehicle_msgs::msg::GearCommand & gear_cmd)
 {
   using pacmod3_msgs::msg::SystemCmdInt;
@@ -591,7 +591,7 @@ uint16_t PacmodInterface::toPacmodShiftCmd(
   return SystemCmdInt::SHIFT_NONE;
 }
 
-std::optional<int32_t> PacmodInterface::toAutowareShiftReport(
+std::optional<int32_t> VWPInterface::toAutowareShiftReport(
   const pacmod3_msgs::msg::SystemRptInt & shift)
 {
   using autoware_auto_vehicle_msgs::msg::GearReport;
@@ -612,7 +612,7 @@ std::optional<int32_t> PacmodInterface::toAutowareShiftReport(
   return {};
 }
 
-uint16_t PacmodInterface::toPacmodTurnCmd(
+uint16_t VWPInterface::toPacmodTurnCmd(
   const autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand & turn,
   const autoware_auto_vehicle_msgs::msg::HazardLightsCommand & hazard)
 {
@@ -633,7 +633,7 @@ uint16_t PacmodInterface::toPacmodTurnCmd(
   return SystemCmdInt::TURN_NONE;
 }
 
-uint16_t PacmodInterface::toPacmodTurnCmdWithHazardRecover(
+uint16_t VWPInterface::toPacmodTurnCmdWithHazardRecover(
   const autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand & turn,
   const autoware_auto_vehicle_msgs::msg::HazardLightsCommand & hazard)
 {
@@ -675,7 +675,7 @@ uint16_t PacmodInterface::toPacmodTurnCmdWithHazardRecover(
   }
 }
 
-int32_t PacmodInterface::toAutowareTurnIndicatorsReport(
+int32_t VWPInterface::toAutowareTurnIndicatorsReport(
   const pacmod3_msgs::msg::SystemRptInt & turn)
 {
   using autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport;
@@ -691,7 +691,7 @@ int32_t PacmodInterface::toAutowareTurnIndicatorsReport(
   return TurnIndicatorsReport::DISABLE;
 }
 
-int32_t PacmodInterface::toAutowareHazardLightsReport(
+int32_t VWPInterface::toAutowareHazardLightsReport(
   const pacmod3_msgs::msg::SystemRptInt & hazard)
 {
   using autoware_auto_vehicle_msgs::msg::HazardLightsReport;
@@ -704,7 +704,7 @@ int32_t PacmodInterface::toAutowareHazardLightsReport(
   return HazardLightsReport::DISABLE;
 }
 
-double PacmodInterface::steerWheelRateLimiter(
+double VWPInterface::steerWheelRateLimiter(
   const double current_steer_cmd, const double prev_steer_cmd,
   const rclcpp::Time & current_steer_time, const rclcpp::Time & prev_steer_time,
   const double steer_rate, const double current_steer_output, const bool engage)
@@ -722,7 +722,7 @@ double PacmodInterface::steerWheelRateLimiter(
   return limited_steer_cmd;
 }
 
-pacmod3_msgs::msg::SystemCmdInt PacmodInterface::createClearOverrideDoorCommand()
+pacmod3_msgs::msg::SystemCmdInt VWPInterface::createClearOverrideDoorCommand()
 {
   pacmod3_msgs::msg::SystemCmdInt door_cmd;
   door_cmd.header.frame_id = "base_link";
@@ -731,7 +731,7 @@ pacmod3_msgs::msg::SystemCmdInt PacmodInterface::createClearOverrideDoorCommand(
   return door_cmd;
 }
 
-pacmod3_msgs::msg::SystemCmdInt PacmodInterface::createDoorCommand(const bool open)
+pacmod3_msgs::msg::SystemCmdInt VWPInterface::createDoorCommand(const bool open)
 {
   pacmod3_msgs::msg::SystemCmdInt door_cmd;
   door_cmd.header.frame_id = "base_link";
@@ -746,7 +746,7 @@ pacmod3_msgs::msg::SystemCmdInt PacmodInterface::createDoorCommand(const bool op
   return door_cmd;
 }
 
-void PacmodInterface::setDoor(
+void VWPInterface::setDoor(
   const tier4_external_api_msgs::srv::SetDoor::Request::SharedPtr request,
   const tier4_external_api_msgs::srv::SetDoor::Response::SharedPtr response)
 {
@@ -772,7 +772,7 @@ void PacmodInterface::setDoor(
   }
 }
 
-tier4_api_msgs::msg::DoorStatus PacmodInterface::toAutowareDoorStatusMsg(
+tier4_api_msgs::msg::DoorStatus VWPInterface::toAutowareDoorStatusMsg(
   const pacmod3_msgs::msg::SystemRptInt & msg_ptr)
 {
   using pacmod3_msgs::msg::SystemRptInt;

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <pacmod_interface/pacmod_interface.hpp>
+#include <vwp_interface/vwp_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <memory>
@@ -20,7 +20,7 @@
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<PacmodInterface>();
+  auto node = std::make_shared<VWPInterface>();
   rclcpp::spin(node);
   rclcpp::shutdown();
   return 0;
