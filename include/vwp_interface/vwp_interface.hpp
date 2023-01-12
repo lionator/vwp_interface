@@ -45,6 +45,8 @@
 #include <tier4_vehicle_msgs/msg/steering_wheel_status_stamped.hpp>
 #include <tier4_vehicle_msgs/msg/vehicle_emergency_stamped.hpp>
 
+#include <vwp_msgs/msg/vehicle_data.hpp>
+
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/synchronizer.h>
@@ -74,6 +76,9 @@ private:
     PacmodFeedbacksSyncPolicy;
 
   /* subscribers */
+  // From VWP (Source: Vehicle CAN)
+  
+
   // From Autoware
   rclcpp::Subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
     control_cmd_sub_;
