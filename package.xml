@@ -12,6 +12,7 @@
   <depend>autoware_auto_control_msgs</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
   <depend>can_msgs</depend>
+  <depend>vwp_msgs</depend>
   <depend>diagnostic_updater</depend>
   <depend>message_filters</depend>
   <depend>pacmod3_msgs</depend>
