@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <launch>
-  <!-- vehicle info -->
-  <arg name="vehicle_info_param_file" default="$(find-pkg-share vehicle_info_util)/config/vehicle_info.param.yaml"/>
+    <!-- vehicle info -->
+  <arg name="vehicle_info_param_file" default="$(find-pkg-share sample_vehicle_description)/config/vehicle_info.param.yaml"/>
 
   <!-- vwp interface -->
   <node pkg="vwp_interface" exec="vwp_interface" name="vwp_interface" output="screen">
     <param from="$(var vehicle_info_param_file)"/>
-    <remap from="input/control_mode_request" to="/control/control_mode_request">
+    <remap from="input/control_mode_request" to="/control/control_mode_request"/>
   </node>
-
+</launch>
