@@ -7,7 +7,7 @@ VWPInterface::VWPInterface(): Node("vwp_interface"),
   std::cout << "TEST" << std::endl;
   // From VWP (VehicleCANNode)
   vwp_autoware_sub_ = create_subscription<vwp_msgs::msg::ToAutoware>(
-    "/vwp/vehicle_can/to_autoware", rclcpp::QoS{1}, std::bind(&VWPInterface::callbackVWPRpt, this, std::placeholders::_1));  
+    "/vwp/vehicle_can/vehicle_data", rclcpp::QoS{1}, std::bind(&VWPInterface::callbackVWPRpt, this, std::placeholders::_1));  
   
  
   std::cout << vehicle_info_.wheel_radius_m << std::endl;
