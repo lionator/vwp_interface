@@ -2,6 +2,7 @@
 #define VWP_INTERFACE__VWP_INTERFACE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
+#include <memory>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 
@@ -10,7 +11,9 @@
 #include <vwp_msgs/msg/to_autoware.hpp>
 
 
-class VWPInterface : public rclcpp::Node
+
+
+  class VWPInterface : public rclcpp::Node
 {
 public:
   using SteeringWheelStatusStamped = tier4_vehicle_msgs::msg::SteeringWheelStatusStamped;
@@ -37,5 +40,6 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
 
 };
+
 
 #endif 

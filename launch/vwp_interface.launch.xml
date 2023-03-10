@@ -4,8 +4,13 @@
   <arg name="vehicle_info_param_file" default="$(find-pkg-share sample_vehicle_description)/config/vehicle_info.param.yaml"/>
 
   <!-- vwp interface -->
-  <node pkg="vwp_interface" exec="vwp_interface" name="vwp_interface" output="screen">
+  <node pkg="vwp_interface" exec="vwp_interface_node" name="vwp_interface" output="screen">
     <param from="$(var vehicle_info_param_file)"/>
     <remap from="input/control_mode_request" to="/control/control_mode_request"/>
   </node>
+
+  <node pkg="vwp_interface" exec="vehicle_status_publisher_node" name="vehicle_status_publisher" output="screen">
+      <param from="$(var vehicle_info_param_file)"/>
+  </node> 
+
 </launch>
