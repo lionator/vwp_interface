@@ -7,6 +7,8 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
 #include <vehicle_info_util/vehicle_info_util.hpp>
+#include "tier4_autoware_utils/math/unit_conversion.hpp"
+
 
 
 // VWP Messages
@@ -36,7 +38,8 @@ protected:
 private:
 
 
-  
+  double calculateVehicleVelocity();
+  double calculateVariableGearRatio(const double vel, const double steer_wheel);
 
   rclcpp::TimerBase::SharedPtr timer_;
 
@@ -79,7 +82,9 @@ private:
         uint8_t   gearLeverPos    = 0;              // 0 Intermediate, 1 = Init, 5 = Park, 6 = Reverse, 7 = Neutral, 8 = Drive, 
                                                     // 9 = Sport, 10 = Efficient, 13 = Tip in S, 14 = Tip in D, 15 = Error             
         float   vehicleVelocity  = 0.0f;          // Speed in km/h                                         
-        float   steeringWheelAngle = 0.0f;        // [deg]                                 
+        float   steeringWheelAngleRad = 0.0f;     // In RAD     
+        float   wheel_speed_rl_ms = 0.0f;
+        float   wheel_speed_rr_ms = 0.0f;
     }; 
 
   subscribedData currentData;
@@ -90,6 +95,13 @@ private:
   double wheel_base_;          // [m]
   double tire_radius_;         // [m]
   vehicle_info_util::VehicleInfo vehicle_info_;
+  double speed_scale_factor_;  // scale factor of speed
+  double steering_offset_;     // [rad] def: measured = truth + offset
+  double vgr_coef_a_;          // variable gear ratio coeffs
+  double vgr_coef_b_;          // variable gear ratio coeffs
+  double vgr_coef_c_;          // variable gear ratio coeffs
+
+
 
   
 
