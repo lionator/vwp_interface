@@ -3,6 +3,11 @@
     <!-- vehicle info -->
   <arg name="vehicle_info_param_file" default="$(find-pkg-share sample_vehicle_description)/config/vehicle_info.param.yaml"/>
 
+
+  <include file="$(find-pkg-share vwp_vehicle_can_pkg)/launch/vwp_vehicle_can.launch.py"/>
+  <include file="$(find-pkg-share vwp_customer_can_pkg)/launch/vwp_customer_can.launch.py"/>
+
+
   <!-- vwp interface -->
   <node pkg="vwp_interface" exec="vwp_interface_node" name="vwp_interface" output="screen">
     <param from="$(var vehicle_info_param_file)"/>

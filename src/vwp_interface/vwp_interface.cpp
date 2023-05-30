@@ -41,6 +41,10 @@ VWPInterface::VWPInterface()
   using std::placeholders::_1;
   using std::placeholders::_2;
 
+  // From VehicleCAN
+  vehicle_data_subscriber_ = create_subscription<vwp_msgs::msg::VehicleData>(
+    "/vwp/vehicle_can/vehicle_data", 1, std::bind(&VWPInterface::callbackVehicleData, this, _1));
+
   // From autoware
   control_cmd_sub_ = create_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>(
     "/control/command/control_cmd", 1, std::bind(&VWPInterface::callbackControlCmd, this, _1));
@@ -58,10 +62,16 @@ VWPInterface::VWPInterface()
 void VWPInterface::publishCommands()
 {
   /* guard */
-  if (!vehicle_data_msg_ptr_ || !control_cmd_ptr_) {
+  if (!vehicle_data_msg_ptr_) {
     RCLCPP_INFO_THROTTLE(
       get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
-      "Can't publish Commands to CustomerCAN. No VehicleData or AutowareCommands available.");
+      "Can't publish Commands to CustomerCAN. No VehicleData from VehicleCAN available.");
+    return;
+  }
+  if (!control_cmd_ptr_) {
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
+      "Can't publish Commands to CustomerCAN. No Incoming AckermannControlCommand available.");
     return;
   }
 
